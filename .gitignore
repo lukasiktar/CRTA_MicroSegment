@@ -1,3 +1,13 @@
 
 *.pyc
 *.md
+../.venv
+../data
+../dataset
+/data
+/model/vit_checkpoint/imagenet21k
+../model
+../predictions
+../test_log
+../TransUNet
+../data.csv

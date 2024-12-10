@@ -9,3 +9,4 @@ ml-collections
 medpy
 SimpleITK
 scipy
+pandas

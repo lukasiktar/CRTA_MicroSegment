@@ -12,7 +12,7 @@ from trainer_MicroUS import trainer_MicroUS
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--root_path', type=str,
-                    default='../data/train_png', help='root dir for training data')
+                    default='./data/train_png', help='root dir for training data')
 parser.add_argument('--dataset', type=str,
                     default='MicroUS', help='experiment_name')
 parser.add_argument('--list_dir', type=str,
@@ -62,7 +62,7 @@ if __name__ == "__main__":
 
     args.is_pretrain = True
     args.exp = 'MicroSegNet_' + dataset_name + str(args.img_size)
-    snapshot_path = "../model/{}".format(args.exp)
+    snapshot_path = "./model/{}".format(args.exp)
    
     # Vit name
     snapshot_path += '_' + args.vit_name
@@ -82,10 +82,14 @@ if __name__ == "__main__":
     config_vit.n_skip = args.n_skip
     if args.vit_name.find('R50') != -1:
         config_vit.patches.grid = (int(args.img_size / args.vit_patches_size), int(args.img_size / args.vit_patches_size))
-
+    config_vit.pretrained_path="./MicroSegNet/model/vit_checkpoint/imagenet21k/R50+ViT-B_16.npz"
     # load model
     net = ViT_seg(config_vit, img_size=args.img_size, num_classes=config_vit.n_classes).cuda()
     net.load_from(weights=np.load(config_vit.pretrained_path))
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(device)
+    net = net.to(device)  # Move the model to the correct device
+   
 
     trainer = {'MicroUS': trainer_MicroUS}
     trainer[dataset_name](args, net, snapshot_path)

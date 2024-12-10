@@ -48,6 +48,7 @@ def trainer_MicroUS(args, model, snapshot_path):
     max_iterations = args.max_epochs * len(trainloader)  # max_epoch = max_iterations // len(trainloader) + 1
     logging.info("{} iterations per epoch. {} max iterations ".format(len(trainloader), max_iterations))
     iterator = tqdm(range(max_epoch), ncols=70)
+    
 
     for epoch_num in iterator:
         epoch_loss = []

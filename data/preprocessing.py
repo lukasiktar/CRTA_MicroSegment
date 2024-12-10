@@ -8,17 +8,20 @@ from tqdm import tqdm
 
 
 # Data preprocessing and 2d images generation
-image_path = 'Micro_Ultrasound_Prostate_Segmentation_Dataset/train/micro_ultrasound_scans/'
-mask_path = 'Micro_Ultrasound_Prostate_Segmentation_Dataset/train/expert_annotations/'
-non_exp_path = 'Micro_Ultrasound_Prostate_Segmentation_Dataset/train/non_expert_annotations/'
-list_path = '../TransUNet/lists/'
-out_image_path = 'train_png/'
-test_image_path = 'Micro_Ultrasound_Prostate_Segmentation_Dataset/test/micro_ultrasound_scans/'
-test_mask_path = 'Micro_Ultrasound_Prostate_Segmentation_Dataset/test/expert_annotations/'
+image_path = 'MicroSegNet/data/Micro_Ultrasound_Prostate_Segmentation_Dataset/train/micro_ultrasound_scans/'
+mask_path = 'MicroSegNet/data/Micro_Ultrasound_Prostate_Segmentation_Dataset/train/expert_annotations/'
+non_exp_path = 'MicroSegNet/data/Micro_Ultrasound_Prostate_Segmentation_Dataset/train/non_expert_annotations/'
 
+list_path = 'TransUNet/lists/'
+out_image_path = 'data/train_png/'
+
+test_image_path = 'MicroSegNet/data/Micro_Ultrasound_Prostate_Segmentation_Dataset/test/micro_ultrasound_scans/'
+test_mask_path = 'MicroSegNet/data/Micro_Ultrasound_Prostate_Segmentation_Dataset/test/expert_annotations/'
+
+#Create train dataset
 os.makedirs(out_image_path, exist_ok=True)
 os.makedirs(list_path, exist_ok=True)
-
+#Store the filenames into a list
 list_of_image = glob.glob(image_path + "*.nii.gz")
 list_of_mask = glob.glob(mask_path + "*.nii.gz")
 list_of_st = glob.glob(non_exp_path + "*.nii.gz")
@@ -41,6 +44,8 @@ height = int(962/down)
 print('Preprocessing starts!')
 print('There are {} images, {} masks and {} non-expert annotations for training.'.format(len(list_of_image), len(list_of_mask), len(list_of_st)))
 print('There are {} images, {} masks for testing.'.format(len(list_of_test_image), len(list_of_test_mask)))
+#gt == mask, st==non_expert annotations
+#Image is ONE .nii file
 for i in tqdm(range(len(list_of_image))):  
     img_name = list_of_image[i]
     gt_name = list_of_mask[i]
@@ -57,6 +62,7 @@ for i in tqdm(range(len(list_of_image))):
     
     number_of_slices = image_array.shape[0]
     
+    #Extract single image from .nii
     for z in range(number_of_slices):
         image_2d = image_array[z]
         if len(seg_array.shape)==3:
@@ -81,9 +87,16 @@ for i in tqdm(range(len(list_of_image))):
 
 # Generate CSV file for checking data.
 print('Start to generate csv file!')
-image_names = sorted(glob.glob(out_image_path + "*img_slice*"))
-seg_names = sorted(glob.glob(out_image_path + "*gt_slice*"))
-student_seg_names = sorted(glob.glob(out_image_path + "*st_slice*"))
+def extract_numbers(filename):
+    # Split on underscores and extract numeric parts
+    parts = filename.split("_")
+    first_number = int(parts[2])  # Extract the first number (e.g., after "microUS_")
+    second_number = int(parts[-1].split("_")[-1].split('.')[0])  # Extract the second number (e.g., after "_slice_")
+    return (first_number, second_number)
+
+image_names = sorted(glob.glob(out_image_path + "*img_slice*"),key=extract_numbers)
+seg_names = sorted(glob.glob(out_image_path + "*gt_slice*"),key=extract_numbers)
+student_seg_names = sorted(glob.glob(out_image_path + "*st_slice*"),key=extract_numbers)
 
 array = np.empty((len(image_names) + 1,5), dtype='U30')
 array[0,0] = "image"
@@ -118,7 +131,7 @@ for i in range(num):
     a = data[key].values[i]
     name.append(a)
 
-with open('../TransUNet/lists/image.txt', 'w') as f:
+with open('TransUNet/lists/image.txt', 'w') as f:
     for item in name:
         f.write("%s\n" % item)
 
@@ -130,7 +143,7 @@ for i in range(num):
     a = data[key].values[i]
     name.append(a)
 
-with open('../TransUNet/lists/mask.txt', 'w') as f:
+with open('TransUNet/lists/mask.txt', 'w') as f:
     for item in name:
         f.write("%s\n" % item)
 
@@ -142,7 +155,7 @@ for i in range(num):
     a = data[key].values[i]
     name.append(a)
 
-with open('../TransUNet/lists/non_expert.txt', 'w') as f:
+with open('TransUNet/lists/non_expert.txt', 'w') as f:
     for item in name:
         f.write("%s\n" % item)
 
@@ -154,7 +167,7 @@ for i in range(num):
     a = data[key].values[i]
     name.append(a)
 
-with open('../TransUNet/lists/test_image.txt', 'w') as f:
+with open('TransUNet/lists/test_image.txt', 'w') as f:
     for item in name:
         f.write("%s\n" % item)
 
@@ -166,7 +179,7 @@ for i in range(num):
     a = data[key].values[i]
     name.append(a)
 
-with open('../TransUNet/lists/test_mask.txt', 'w') as f:
+with open('TransUNet/lists/test_mask.txt', 'w') as f:
     for item in name:
         f.write("%s\n" % item)
 

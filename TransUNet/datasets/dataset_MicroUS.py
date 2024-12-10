@@ -48,11 +48,11 @@ class MicroUS_dataset(Dataset):
         self.transform = transform
         self.split = split
         self.data_dir = base_dir
-        self.image_list = open(os.path.join(list_dir, 'image'+'.txt')).readlines()
-        self.label_list = open(os.path.join(list_dir, 'mask'+'.txt')).readlines()
-        self.non_expert_list = open(os.path.join(list_dir, 'non_expert'+'.txt')).readlines()
-        self.test_image_list = open(os.path.join(list_dir, 'test'+'_image'+'.txt')).readlines()
-        self.test_label_list = open(os.path.join(list_dir, 'test'+'_mask'+'.txt')).readlines()
+        self.image_list = open(os.path.join('TransUNet/'+list_dir, 'image'+'.txt')).readlines()
+        self.label_list = open(os.path.join('TransUNet/'+list_dir, 'mask'+'.txt')).readlines()
+        self.non_expert_list = open(os.path.join('TransUNet/'+list_dir, 'non_expert'+'.txt')).readlines()
+        self.test_image_list = open(os.path.join('TransUNet/'+list_dir, 'test'+'_image'+'.txt')).readlines()
+        self.test_label_list = open(os.path.join('TransUNet/'+list_dir, 'test'+'_mask'+'.txt')).readlines()
 
         
     def __len__(self):

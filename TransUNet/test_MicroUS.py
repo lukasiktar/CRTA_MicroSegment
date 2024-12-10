@@ -17,7 +17,7 @@ from networks.vit_seg_modeling import CONFIGS as CONFIGS_ViT_seg
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_path', type=str,
-                    default='../data/Micro_Ultrasound_Prostate_Segmentation_Dataset/test', help='root dir for test data')
+                    default='MicroSegNet/data/Micro_Ultrasound_Prostate_Segmentation_Dataset/test', help='root dir for test data')
 parser.add_argument('--dataset', type=str,
                     default='MicroUS', help='experiment_name')
 parser.add_argument('--num_classes', type=int,
@@ -111,7 +111,7 @@ if __name__ == "__main__":
 
     # name the same snapshot defined in train script!
     args.exp = 'MicroSegNet_' + dataset_name + str(args.img_size)
-    snapshot_path = "../model/{}".format(args.exp)
+    snapshot_path = "./model/{}".format(args.exp)
 
     snapshot_path += '_' + args.vit_name
     snapshot_path = snapshot_path + '_weight' + str(args.weight)
@@ -143,7 +143,7 @@ if __name__ == "__main__":
     logging.info(snapshot_name)
 
     if args.is_savenii==1:
-        args.test_save_dir = '../predictions'
+        args.test_save_dir = './predictions'
         test_save_path = os.path.join(args.test_save_dir, args.exp, snapshot_name)
         os.makedirs(test_save_path, exist_ok=True)
     else:
