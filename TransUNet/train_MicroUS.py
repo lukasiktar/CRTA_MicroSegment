@@ -9,6 +9,8 @@ from networks.vit_seg_modeling import CONFIGS as CONFIGS_ViT_seg
 from trainer_MicroUS import trainer_MicroUS
 from trainer_MicroUS import trainer_MicroUS
 
+torch.cuda.empty_cache()
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--root_path', type=str,
@@ -31,7 +33,7 @@ parser.add_argument('--deterministic', type=int,  default=1,
 parser.add_argument('--base_lr', type=float,  default=0.01,
                     help='segmentation network learning rate')
 parser.add_argument('--img_size', type=int,
-                    default=224, help='input image size of network input')
+                    default=520, help='input image size of network input')
 parser.add_argument('--seed', type=int,
                     default=1234, help='random seed')
 parser.add_argument('--n_skip', type=int,

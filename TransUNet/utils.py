@@ -74,6 +74,7 @@ def test_single_volume(image, label, net, spacing, origin, direction, classes, p
             slice = cv2.resize(slice, patch_size, interpolation = cv2.INTER_NEAREST)
 
         input = torch.from_numpy(slice).unsqueeze(0).unsqueeze(0).float().cuda()
+        print(f"Input shape: {input.shape}")
         net.eval()
         with torch.no_grad():
             outputs, _, _, _  = net(input)
