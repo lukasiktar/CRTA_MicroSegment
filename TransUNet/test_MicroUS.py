@@ -17,7 +17,7 @@ from networks.vit_seg_modeling import CONFIGS as CONFIGS_ViT_seg
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_path', type=str,
-                    default='MicroSegNet/data/Micro_Ultrasound_Prostate_Segmentation_Dataset/test', help='root dir for test data')
+                    default='CRTA_MicroSegment/data/Micro_Ultrasound_Prostate_Segmentation_Dataset/test', help='root dir for test data')
 parser.add_argument('--dataset', type=str,
                     default='MicroUS', help='experiment_name')
 parser.add_argument('--num_classes', type=int,
@@ -26,8 +26,8 @@ parser.add_argument('--list_dir', type=str,
                     default='./lists', help='list dir')
 
 parser.add_argument('--max_iterations', type=int, default=30000, help='maximum epoch number to train')
-parser.add_argument('--max_epochs', type=int, default=10, help='maximum epoch number to train')
-parser.add_argument('--batch_size', type=int, default=8, help='batch_size per gpu')
+parser.add_argument('--max_epochs', type=int, default=40, help='maximum epoch number to train')
+parser.add_argument('--batch_size', type=int, default=4, help='batch_size per gpu')
 parser.add_argument('--img_size', type=int, default=224, help='input patch size of network input')
 parser.add_argument('--is_savenii', action="store_false", help='whether to save results during inference')
 
@@ -110,7 +110,7 @@ if __name__ == "__main__":
     args.is_pretrain = True
 
     # name the same snapshot defined in train script!
-    args.exp = 'MicroSegNet_' + dataset_name + str(args.img_size)
+    args.exp = 'CRTA_MicroSegment' + dataset_name + str(args.img_size)
     snapshot_path = "./model/{}".format(args.exp)
 
     snapshot_path += '_' + args.vit_name

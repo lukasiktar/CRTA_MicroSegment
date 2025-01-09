@@ -24,16 +24,16 @@ parser.add_argument('--num_classes', type=int,
 parser.add_argument('--max_iterations', type=int,
                     default=30000, help='maximum iteration number to train')
 parser.add_argument('--max_epochs', type=int,
-                    default=10, help='maximum epoch number to train')
+                    default=40, help='maximum epoch number to train')
 parser.add_argument('--batch_size', type=int,
-                    default=8, help='batch_size per gpu')
+                    default=4, help='batch_size per gpu')
 parser.add_argument('--n_gpu', type=int, default=1, help='total gpu')
 parser.add_argument('--deterministic', type=int,  default=1,
                     help='whether use deterministic training')
 parser.add_argument('--base_lr', type=float,  default=0.01,
                     help='segmentation network learning rate')
 parser.add_argument('--img_size', type=int,
-                    default=520, help='input image size of network input')
+                    default=224, help='input image size of network input')
 parser.add_argument('--seed', type=int,
                     default=1234, help='random seed')
 parser.add_argument('--n_skip', type=int,
@@ -63,7 +63,7 @@ if __name__ == "__main__":
     dataset_name = args.dataset
 
     args.is_pretrain = True
-    args.exp = 'MicroSegNet_' + dataset_name + str(args.img_size)
+    args.exp = 'CRTA_MicroSegment' + dataset_name + str(args.img_size)
     snapshot_path = "./model/{}".format(args.exp)
    
     # Vit name
@@ -84,7 +84,7 @@ if __name__ == "__main__":
     config_vit.n_skip = args.n_skip
     if args.vit_name.find('R50') != -1:
         config_vit.patches.grid = (int(args.img_size / args.vit_patches_size), int(args.img_size / args.vit_patches_size))
-    config_vit.pretrained_path="./MicroSegNet/model/vit_checkpoint/imagenet21k/R50+ViT-B_16.npz"
+    config_vit.pretrained_path="./CRTA_MicroSegment/model/vit_checkpoint/imagenet21k/R50-ViT-B_16.npz"
     # load model
     net = ViT_seg(config_vit, img_size=args.img_size, num_classes=config_vit.n_classes).cuda()
     net.load_from(weights=np.load(config_vit.pretrained_path))

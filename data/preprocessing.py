@@ -8,15 +8,16 @@ from tqdm import tqdm
 
 
 # Data preprocessing and 2d images generation
-image_path = 'MicroSegNet/data/Micro_Ultrasound_Prostate_Segmentation_Dataset/train/micro_ultrasound_scans/'
-mask_path = 'MicroSegNet/data/Micro_Ultrasound_Prostate_Segmentation_Dataset/train/expert_annotations/'
-non_exp_path = 'MicroSegNet/data/Micro_Ultrasound_Prostate_Segmentation_Dataset/train/non_expert_annotations/'
+#Used datasets
+image_path = 'CRTA_MicroSegment/data/Micro_Ultrasound_Prostate_Segmentation_Dataset/train/micro_ultrasound_scans/'
+mask_path = 'CRTA_MicroSegment/data/Micro_Ultrasound_Prostate_Segmentation_Dataset/train/expert_annotations/'
+non_exp_path = 'CRTA_MicroSegment/data/Micro_Ultrasound_Prostate_Segmentation_Dataset/train/non_expert_annotations/'
 
 list_path = 'TransUNet/lists/'
 out_image_path = 'data/train_png/'
 
-test_image_path = 'MicroSegNet/data/Micro_Ultrasound_Prostate_Segmentation_Dataset/test/micro_ultrasound_scans/'
-test_mask_path = 'MicroSegNet/data/Micro_Ultrasound_Prostate_Segmentation_Dataset/test/expert_annotations/'
+test_image_path = 'CRTA_MicroSegment/data/Micro_Ultrasound_Prostate_Segmentation_Dataset/test/micro_ultrasound_scans/'
+test_mask_path = 'CRTA_MicroSegment/data/Micro_Ultrasound_Prostate_Segmentation_Dataset/test/expert_annotations/'
 
 #Create train dataset
 os.makedirs(out_image_path, exist_ok=True)
