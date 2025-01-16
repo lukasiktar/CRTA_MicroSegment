@@ -1,3 +1,12 @@
+# ------------------------------------------------------------------------------
+# Script Name: inference_MicroSegNet.py
+# Description: Main inference script.
+# Author: Luka Siktar
+# Date Created: 2025-01-16
+# Last Modified: 2025-01-16
+# Version: 1.0
+# Contact: lsiktar@fsb.hr, luka.siktar@gmail.com
+# ------------------------------------------------------------------------------
 import argparse
 import torch
 

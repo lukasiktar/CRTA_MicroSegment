@@ -1,3 +1,14 @@
+# ------------------------------------------------------------------------------
+# Script Name: display_results.py
+# Description: This script loads and displays a set of images from a specified
+#              directory for inference results (e.g., segmentation output).
+# Author: Luka Siktar
+# Date Created: 2025-01-16
+# Last Modified: 2025-01-16
+# Version: 1.0
+# Contact: lsiktar@fsb.hr, luka.siktar@gmail.com
+# ------------------------------------------------------------------------------
+
 import os
 import numpy as np
 import matplotlib.pyplot as plt

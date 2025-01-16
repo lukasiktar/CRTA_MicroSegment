@@ -1,3 +1,13 @@
+# ------------------------------------------------------------------------------
+# Script Name: prepareDataAndPredict.py
+# Description: The script used for data preparation and inference. The input images,
+#           mask images and segmentation images are stored.
+# Author: Luka Siktar
+# Date Created: 2025-01-16
+# Last Modified: 2025-01-16
+# Version: 1.0
+# Contact: lsiktar@fsb.hr, luka.siktar@gmail.com
+# ------------------------------------------------------------------------------
 import os
 import cv2
 import torch
