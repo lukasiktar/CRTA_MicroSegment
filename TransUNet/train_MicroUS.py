@@ -24,7 +24,7 @@ parser.add_argument('--num_classes', type=int,
 parser.add_argument('--max_iterations', type=int,
                     default=30000, help='maximum iteration number to train')
 parser.add_argument('--max_epochs', type=int,
-                    default=40, help='maximum epoch number to train')
+                    default=30, help='maximum epoch number to train')
 parser.add_argument('--batch_size', type=int,
                     default=4, help='batch_size per gpu')
 parser.add_argument('--n_gpu', type=int, default=1, help='total gpu')
@@ -89,7 +89,6 @@ if __name__ == "__main__":
     net = ViT_seg(config_vit, img_size=args.img_size, num_classes=config_vit.n_classes).cuda()
     net.load_from(weights=np.load(config_vit.pretrained_path))
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(device)
     net = net.to(device)  # Move the model to the correct device
    
 

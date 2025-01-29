@@ -9,14 +9,22 @@
 # ------------------------------------------------------------------------------
 import argparse
 import torch
-
+import sys
+sys.path.append("/home/crta-hp-408/PRONOBIS/MicroSegNet")
 from CRTA_MicroSegment.TransUNet.networks.vit_seg_modeling import VisionTransformer as ViT_seg
 from CRTA_MicroSegment.TransUNet.networks.vit_seg_modeling import CONFIGS as CONFIGS_ViT_seg
 from prepareDataAndPredict import prepare_data_and_predict
 from displayResults import display_results
 
-MODEL_PATH="model/CRTA_MicroSegmentMicroUS224_R50-ViT-B_16_weight4_epo40_bs4/epoch_39.pth"
-DATASET_DIRECTORY="/home/crta-hp-408/PRONOBIS/ExactVU_dataset/20231212095259160_1"
+MODEL_PATH="/home/crta-hp-408/PRONOBIS/MicroSegNet/model/CRTA_MicroSegmentMicroUS224_R50-ViT-B_16_weight4_epo30_bs4/epoch_29.pth"
+
+#DATASET_DIRECTORY="/home/crta-hp-408/PRONOBIS/ExactVU_dataset/20231212095259160_1"
+#DATASET_DIRECTORY="/home/crta-hp-408/PRONOBIS/ExactVU_dataset/ExactVu_fantom"
+#DATASET_DIRECTORY="/home/crta-hp-408/PRONOBIS/CRTA_fantom_dataset/prostate_1_full"
+#DATASET_DIRECTORY="/home/crta-hp-408/PRONOBIS/CRTA_fantom_dataset/prostate_2_full"
+#DATASET_DIRECTORY="/home/crta-hp-408/Downloads/5/processed"
+#DATASET_DIRECTORY="/home/crta-hp-408/Downloads/8/processed"
+
 INPUT_IMAGES_DIRECTORY="input_images"
 OUTPUT_MASKS_DIRECTORY="output_images"
 OUTPUT_SEGMENTATIONS_DIRECTORY="output_segmentations"
@@ -48,4 +56,4 @@ images_dir=DATASET_DIRECTORY
 prepare_data_and_predict(images_dir, net)
 
 #Optional: Display the inference results
-display_results(number_of_images_to_show=10, output_dir=OUTPUT_SEGMENTATIONS_DIRECTORY)
+#display_results(number_of_images_to_show=10, output_dir=OUTPUT_SEGMENTATIONS_DIRECTORY)

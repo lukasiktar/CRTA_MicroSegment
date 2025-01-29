@@ -42,15 +42,19 @@ def prepare_data_and_predict(images_dir, net):
 
         orig_image=cv2.imread(image_path)
         path=image_path.split("_")[-2] 
-        deg=image_path.split("_")[-1].split(".j")[-2]
-
+        #deg=image_path.split("_")[-1].split(".j")[-2]
+        deg=image_path.split("/")[-1].split(".j")[-2]
+        #deg=image_path.split("-")[-1].split(".p")[0]
+        print(deg)
         #images.append(orig_image)
         
         #Convert image to grayscale
         image= cv2.cvtColor(orig_image, cv2.COLOR_BGR2GRAY)
 
         #Store the input=original images
-        output_path_original_image= os.path.join(output_dir2, f"{dir_name}_original_{path}.png")
+        #output_path_original_image= os.path.join(output_dir2, f"{dir_name}_original_{path}.png")
+        output_path_original_image= os.path.join(output_dir2, f"{dir_name}_original_{deg}.png")
+
         cv2.imwrite(output_path_original_image, image)
 
         # Convert the image to a PyTorch tensor
@@ -77,12 +81,14 @@ def prepare_data_and_predict(images_dir, net):
                 a = 1.0*(pred>0.5)
                 prediction = a.astype(np.uint8)
                 #Resize to original image (fix - autmate)
-                prediction=cv2.resize(prediction, (924,962))
+                prediction=cv2.resize(prediction, (image.shape[1],image.shape[0]))
                 prediction = cv2.normalize(prediction, dst=None, alpha=0, beta=255,norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8U)
                 predictions.append(prediction)
 
                 #Store masks
-                output_path = os.path.join(output_dir, f"{dir_name}_slice_{path}.png")
+                #output_path = os.path.join(output_dir, f"{dir_name}_slice_{path}.png")
+                output_path = os.path.join(output_dir, f"{dir_name}_slice_{deg}.png")
+
                 cv2.imwrite(output_path, prediction)
 
                 #Find contours on predicted masks (used for visualization)
@@ -90,7 +96,9 @@ def prepare_data_and_predict(images_dir, net):
                 cv2.drawContours(orig_image, contours, -1, (0,0,255),5)
 
                 #Store the images with found contours
-                output_path1 = os.path.join(output_dir1, f"{dir_name}_segmentation_{path}.png")
+                #output_path1 = os.path.join(output_dir1, f"{dir_name}_segmentation_{path}.png")
+                output_path1 = os.path.join(output_dir1, f"{dir_name}_segmentation_{deg}.png")
+
                 cv2.imwrite(output_path1, orig_image)
 
 
