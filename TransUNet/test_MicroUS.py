@@ -26,8 +26,8 @@ parser.add_argument('--list_dir', type=str,
                     default='./lists', help='list dir')
 
 parser.add_argument('--max_iterations', type=int, default=30000, help='maximum epoch number to train')
-parser.add_argument('--max_epochs', type=int, default=40, help='maximum epoch number to train')
-parser.add_argument('--batch_size', type=int, default=4, help='batch_size per gpu')
+parser.add_argument('--max_epochs', type=int, default=32, help='maximum epoch number to train')
+parser.add_argument('--batch_size', type=int, default=8, help='batch_size per gpu')
 parser.add_argument('--img_size', type=int, default=224, help='input patch size of network input')
 parser.add_argument('--is_savenii', action="store_false", help='whether to save results during inference')
 
@@ -116,7 +116,7 @@ if __name__ == "__main__":
     snapshot_path += '_' + args.vit_name
     snapshot_path = snapshot_path + '_weight' + str(args.weight)
     snapshot_path = snapshot_path + '_epo' + str(args.max_epochs) if args.max_epochs != 15 else snapshot_path
-    snapshot_path = snapshot_path+'_bs'+str(args.batch_size)
+    snapshot_path = snapshot_path+'_bs'+str(args.batch_size)+'_cls_seg_01'
     snapshot_path = snapshot_path + '_lr' + str(args.base_lr) if args.base_lr != 0.01 else snapshot_path
 
     config_vit = CONFIGS_ViT_seg[args.vit_name]

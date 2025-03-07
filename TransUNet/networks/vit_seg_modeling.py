@@ -16,8 +16,11 @@ import numpy as np
 from torch.nn import CrossEntropyLoss, Dropout, Softmax, Linear, Conv2d, LayerNorm
 from torch.nn.modules.utils import _pair
 from scipy import ndimage
-from . import vit_seg_configs as configs
-from .vit_seg_modeling_resnet_skip import ResNetV2
+import sys
+sys.path.append("/home/crta-hp-408/PRONOBIS/MicroSegNet")
+
+from CRTA_MicroSegment.TransUNet.networks import vit_seg_configs as configs
+from CRTA_MicroSegment.TransUNet.networks.vit_seg_modeling_resnet_skip import ResNetV2
 
 
 logger = logging.getLogger(__name__)
@@ -409,15 +412,39 @@ class VisionTransformer(nn.Module):
             out_channels=config['n_classes'],
             kernel_size=3,
         )
+        self.classification_head = nn.Sequential(
+            nn.Linear(config.hidden_size, 512),
+            nn.BatchNorm1d(512),
+            nn.ReLU(),
+            nn.Dropout(0.5),
+            nn.Linear(512,256),
+            nn.BatchNorm1d(256),
+            nn.ReLU(),
+            nn.Dropout(0.5),
+            nn.Linear(256, 128), # Assuming binary classification
+            nn.BatchNorm1d(128),
+            nn.ReLU(),
+            nn.Dropout(0.5),
+            nn.Linear(128, 1),
+            nn.BatchNorm1d(1)
+        )
         self.config = config
 
     def forward(self, x):
         if x.size()[1] == 1:
             x = x.repeat(1,3,1,1)
         x, attn_weights, features = self.transformer(x)  # (B, n_patch, hidden)
+        # Classification
+        cls_token = x[:, 0, :]  # Use the [CLS] token for classification
+        classification_output = self.classification_head(cls_token)
+        
+        # Ensure classification_output is 2D: [batch_size, num_classes]
+        if classification_output.dim() == 1:
+            classification_output = classification_output.unsqueeze(1)
+
         x, out0, out1, out2 = self.decoder(x, features)
         logits = self.segmentation_head(x)
-        return logits, out0, out1, out2
+        return logits, out0, out1, out2, classification_output
 
     def load_from(self, weights):
         with torch.no_grad():

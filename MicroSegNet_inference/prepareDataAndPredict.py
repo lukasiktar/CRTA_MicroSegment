@@ -12,8 +12,10 @@ import os
 import cv2
 import torch
 import numpy as np
+from scipy.interpolate import splprep, splev
 
-def prepare_data_and_predict(images_dir, net):
+
+def prepare_data_and_predict(main_dir, images_dir, net):
     #Image size
     dir_name=images_dir.split("/")[-1]
     patch_size=[224, 224]
@@ -29,13 +31,13 @@ def prepare_data_and_predict(images_dir, net):
     #images=[]
     predictions=[]
 
-    output_dir = 'output_images'  # Directory where output images will be saved
+    output_dir = f"{main_dir}_processed/output_images" # Directory where output images will be saved
     os.makedirs(output_dir, exist_ok=True)  # Create directory if it doesn't exist
 
-    output_dir1 = 'output_segmentations'  # Directory where segmentation images will be saved
+    output_dir1 = f"{main_dir}_processed/output_segmentations" # Directory where segmentation images will be saved
     os.makedirs(output_dir1, exist_ok=True) 
 
-    output_dir2 = 'input_images'  # Directory where input images will be saved
+    output_dir2 = f"{main_dir}_processed/input_images"  # Directory where input images will be saved
     os.makedirs(output_dir2, exist_ok=True) 
 
     for counter, image_path in enumerate(images_paths):
@@ -43,9 +45,10 @@ def prepare_data_and_predict(images_dir, net):
         orig_image=cv2.imread(image_path)
         path=image_path.split("_")[-2] 
         #deg=image_path.split("_")[-1].split(".j")[-2]
-        deg=image_path.split("/")[-1].split(".j")[-2]
+        deg=image_path.split("/")[-1].split(".j")[-2].split("'")[-1]
         #deg=image_path.split("-")[-1].split(".p")[0]
-        print(deg)
+        deg=deg.replace(f"decdeg","deg")        #If images have wrong name, change it
+        #print(deg)
         #images.append(orig_image)
         
         #Convert image to grayscale
@@ -53,7 +56,7 @@ def prepare_data_and_predict(images_dir, net):
 
         #Store the input=original images
         #output_path_original_image= os.path.join(output_dir2, f"{dir_name}_original_{path}.png")
-        output_path_original_image= os.path.join(output_dir2, f"{dir_name}_original_{deg}.png")
+        output_path_original_image= os.path.join(output_dir2, f"original_{deg}.png")
 
         cv2.imwrite(output_path_original_image, image)
 
@@ -69,10 +72,20 @@ def prepare_data_and_predict(images_dir, net):
 
         with torch.no_grad():
                 #Model outputs
-                outputs, _, _, _  = net(input_nn)
+                outputs, _, _, _, cls_output= net(input_nn)
                 #Model predictions
-                out = torch.sigmoid(outputs).squeeze()
-                pred = out.cpu().detach().numpy()
+                # Apply sigmoid to classification output
+                cls_pred = torch.sigmoid(cls_output).squeeze()
+                print(cls_pred)
+                #Check if the classification predicts an object (you may need to adjust the threshold)
+                if cls_pred.item() < 0.9:  # Assuming 0.5 as the threshold
+                    print("!!!!!!!!!!!!!!!!!!")
+                    # If no object is predicted, create a black mask
+                    pred = np.zeros((image.shape[0], image.shape[1]), dtype=np.uint8)
+                else:
+                    # If an object is predicted, proceed with segmentation as before
+                    out = torch.sigmoid(outputs).squeeze()
+                    pred = out.cpu().detach().numpy()
 
                 if x != patch_size[0] or y != patch_size[1]:
                     pred = cv2.resize(out, (y, x), interpolation = cv2.INTER_NEAREST)
@@ -84,20 +97,45 @@ def prepare_data_and_predict(images_dir, net):
                 prediction=cv2.resize(prediction, (image.shape[1],image.shape[0]))
                 prediction = cv2.normalize(prediction, dst=None, alpha=0, beta=255,norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8U)
                 predictions.append(prediction)
-
                 #Store masks
                 #output_path = os.path.join(output_dir, f"{dir_name}_slice_{path}.png")
-                output_path = os.path.join(output_dir, f"{dir_name}_slice_{deg}.png")
+                output_path = os.path.join(output_dir, f"mask_{deg}.png")
 
-                cv2.imwrite(output_path, prediction)
+                
 
                 #Find contours on predicted masks (used for visualization)
                 contours, hierarchy = cv2.findContours(prediction,cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-                cv2.drawContours(orig_image, contours, -1, (0,0,255),5)
+                #Smooth the contours
+                smoothened = []
+                for contour in contours:
+                    
+                    x_1,y_1 = contour.T
+                    # Convert from numpy arrays to normal arrays
+                    x_1 = x_1.tolist()[0]
+                    y_1 = y_1.tolist()[0]
+                    # https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.interpolate.splprep.html
+                    tck, u = splprep([x_1,y_1], u=None, s=0.0, k=1, per=1)
+                    # https://docs.scipy.org/doc/numpy-1.10.1/reference/generated/numpy.linspace.html
+                    u_new = np.linspace(u.min(), u.max(), 100)
+
+                    
+                    # https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.interpolate.splev.html
+                    x_new, y_new = splev(u_new, tck, der=0)
+                    # Convert it back to numpy format for opencv to be able to display it
+                    res_array = [[[int(i[0]), int(i[1])]] for i in zip(x_new,y_new)]
+                    smoothened.append(np.asarray(res_array, dtype=np.int32))
+
+                #Show only the biggest contour
+                cv2.drawContours(orig_image, smoothened, 0, (0,0,255),3)
+
+                #Smooth the conoturs and store them
+                prediction[:] = 0  
+                cv2.drawContours(prediction, smoothened, 0, (255,255,255),-1)
+                cv2.imwrite(output_path, prediction)
 
                 #Store the images with found contours
                 #output_path1 = os.path.join(output_dir1, f"{dir_name}_segmentation_{path}.png")
-                output_path1 = os.path.join(output_dir1, f"{dir_name}_segmentation_{deg}.png")
+                output_path1 = os.path.join(output_dir1, f"segmentation_{deg}.png")
 
                 cv2.imwrite(output_path1, orig_image)
 

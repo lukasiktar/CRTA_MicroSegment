@@ -14,7 +14,6 @@ def attention_BCE_loss(h_W, y_true, y_pred, y_std, ks = 5):
     y_true_np = y_true.cpu().detach().numpy()
     y_std_np = y_std.cpu().detach().numpy()
 
-
     hard = cv2.bitwise_xor(y_true_np, y_std_np)
     hard = hard.astype(np.uint8)
     
@@ -41,6 +40,10 @@ def attention_BCE_loss(h_W, y_true, y_pred, y_std, ks = 5):
     return LOSS
 
 
+
+
+
+
 def calculate_metric_percase(pred, gt, spacing):
     pred[pred > 0] = 1
     gt[gt > 0] = 1
@@ -64,10 +67,12 @@ def calculate_metric_percase(pred, gt, spacing):
 
 def test_single_volume(image, label, net, spacing, origin, direction, classes, patch_size=[256, 256], test_save_path=None, case=None):
     image, label = image.squeeze(0).cpu().detach().numpy(), label.squeeze(0).cpu().detach().numpy()
-
+    #cls_label_batch = (label.sum(dim=(1,2)) > 0).float()
+    sums = [1.0 if cv2.sumElems(img)[0] > 0 else 0.0 for img in label]
     prediction = np.zeros_like(label)
     for ind in range(image.shape[0]):
         slice = image[ind, :, :]/254.0
+        label_1 = sums[ind]
 
         x, y = slice.shape[0], slice.shape[1]
         if x != patch_size[0] or y != patch_size[1]:
@@ -77,15 +82,24 @@ def test_single_volume(image, label, net, spacing, origin, direction, classes, p
         #print(f"Input shape: {input.shape}")
         net.eval()
         with torch.no_grad():
-            outputs, _, _, _  = net(input)
+            outputs, _, _, _, cls_output = net(input)
             out = torch.sigmoid(outputs).squeeze()
-
+            
             out = out.cpu().detach().numpy()
 
             if x != patch_size[0] or y != patch_size[1]:
                 pred = cv2.resize(out, (y, x), interpolation = cv2.INTER_NEAREST)
             else:
                 pred = out
+            print(cv2.sumElems(pred))
+            if torch.sigmoid(cls_output) < 0.9:
+                
+                pred = np.zeros_like(label[ind])
+                
+
+            print(cv2.sumElems(pred))
+           
+
 
             a = 1.0*(pred>0.5)
             prediction[ind] = a.astype(np.uint8)
