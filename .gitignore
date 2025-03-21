@@ -11,3 +11,4 @@
 ../test_log
 ../TransUNet
 ../data.csv
+/MicroSegNet_inference/Test_images

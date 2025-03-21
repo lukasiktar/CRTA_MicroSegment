@@ -77,6 +77,7 @@ class MicroUS_dataset(Dataset):
             vol_image_name = self.test_image_list[idx].strip('\n')
             filepath = self.data_dir + '/micro_ultrasound_scans' + "/{}.nii.gz".format(vol_image_name)
             vol_image = sitk.ReadImage(filepath)
+            
             spacing = vol_image.GetSpacing()
             origin = vol_image.GetOrigin()
             direction = vol_image.GetDirection()
@@ -94,6 +95,28 @@ class MicroUS_dataset(Dataset):
             sample['spacing'] = spacing
             sample['origin'] = origin
             sample['direction'] = direction
+
+        # else:
+        #     vol_image_name = self.test_image_list[idx].strip('\n')
+        #     filepath = self.data_dir + '/micro_ultrasound_scans' + "/{}.nii".format(vol_image_name)
+        #     vol_image = sitk.ReadImage(filepath)
+        #     spacing = vol_image.GetSpacing()
+        #     origin = vol_image.GetOrigin()
+        #     direction = vol_image.GetDirection()
+        #     vol_image = sitk.GetArrayFromImage(vol_image)
+
+        #     vol_label_name = self.test_label_list[idx].strip('\n')
+        #     filepath = self.data_dir + '/expert_annotations' + "/{}.nii".format(vol_label_name)
+        #     vol_label = sitk.ReadImage(filepath)
+        #     vol_label = sitk.GetArrayFromImage(vol_label)
+
+        #     image, label = vol_image, vol_label
+
+        #     sample = {'image': image, 'label': label}
+        #     sample['case_name'] = self.test_image_list[idx].strip('\n')
+        #     sample['spacing'] = spacing
+        #     sample['origin'] = origin
+        #     sample['direction'] = direction
 
         if self.transform:
             sample = self.transform(sample)

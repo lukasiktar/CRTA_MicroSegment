@@ -14,7 +14,7 @@ torch.cuda.empty_cache()
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--root_path', type=str,
-                    default='./data/train_png', help='root dir for training data')
+                    default='./data/train_png_base', help='root dir for training data')
 parser.add_argument('--dataset', type=str,
                     default='MicroUS', help='experiment_name')
 parser.add_argument('--list_dir', type=str,

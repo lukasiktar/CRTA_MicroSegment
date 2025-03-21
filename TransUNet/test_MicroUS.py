@@ -26,8 +26,8 @@ parser.add_argument('--list_dir', type=str,
                     default='./lists', help='list dir')
 
 parser.add_argument('--max_iterations', type=int, default=30000, help='maximum epoch number to train')
-parser.add_argument('--max_epochs', type=int, default=32, help='maximum epoch number to train')
-parser.add_argument('--batch_size', type=int, default=8, help='batch_size per gpu')
+parser.add_argument('--max_epochs', type=int, default=30, help='maximum epoch number to train')
+parser.add_argument('--batch_size', type=int, default=4, help='batch_size per gpu')
 parser.add_argument('--img_size', type=int, default=224, help='input patch size of network input')
 parser.add_argument('--is_savenii', action="store_false", help='whether to save results during inference')
 
@@ -51,9 +51,11 @@ def inference(args, model, test_save_path):
     metric_list = 0.0
     result_list = []
 
-    array = np.empty((len(db_test) + 2,3), dtype='U50')
+    array = np.empty((len(db_test) + 2,5), dtype='U50')
     array[0,1] = "Dice"
     array[0,2] = "HD95"
+    array[0,3] = "Jaccard"
+    array[0,4] = "Specificity"
 
     for i_batch, sampled_batch in tqdm(enumerate(testloader)):
         h, w = sampled_batch["image"].size()[2:]
@@ -68,23 +70,31 @@ def inference(args, model, test_save_path):
         metric_list += np.array(metric_i)
         result_list.append(metric_i[0][0])
         result_list.append(metric_i[0][1])
-
-        logging.info('idx %d case %s mean_dice %f mean_hd95 %f' % (i_batch, case_name, np.mean(metric_i, axis=0)[0], np.mean(metric_i, axis=0)[1]))
+        result_list.append(metric_i[0][2])
+        result_list.append(metric_i[0][3])
+        print(metric_i)
+        logging.info('idx %d case %s mean_dice %f mean_hd95 %f mean_jc %f mean_sp %f' % (i_batch, case_name, np.mean(metric_i, axis=0)[0], np.mean(metric_i, axis=0)[1], np.mean(metric_i, axis=0)[2],np.mean(metric_i, axis=0)[3]))
 
         array[i_batch+1,0] = case_name
         array[i_batch+1,1] = metric_i[0][0]
         array[i_batch+1,2] = metric_i[0][1]
+        array[i_batch+1,3] = metric_i[0][2]
+        array[i_batch+1,4] = metric_i[0][3]
 
     metric_list = metric_list / len(db_test)
 
     mean_dice = np.mean(metric_list, axis=0)[0]
     mean_hd95 = np.mean(metric_list, axis=0)[1]
-    logging.info('Mean testing performance: mean_dice : %f mean_hd95 : %f ' % (mean_dice, mean_hd95))
+    mean_jc = np.mean(metric_list, axis=0)[2]
+    mean_sp =np.mean(metric_list, axis=0)[3]
+    logging.info('Mean testing performance: mean_dice : %f mean_hd95 : %f mean_jc : %f  mean_sp : %f' % (mean_dice, mean_hd95, mean_jc, mean_sp))
     logging.info(result_list)
 
     array[-1, 0] = "Average"
     array[-1, 1] = mean_dice
     array[-1, 2] = mean_hd95
+    array[-1, 3] = mean_jc
+    array[-1, 4] = mean_sp
 
     # Save csv file
     log_folder = './test_log/test_log_' + args.exp
@@ -116,7 +126,7 @@ if __name__ == "__main__":
     snapshot_path += '_' + args.vit_name
     snapshot_path = snapshot_path + '_weight' + str(args.weight)
     snapshot_path = snapshot_path + '_epo' + str(args.max_epochs) if args.max_epochs != 15 else snapshot_path
-    snapshot_path = snapshot_path+'_bs'+str(args.batch_size)+'_cls_seg_01'
+    snapshot_path = snapshot_path+'_bs'+str(args.batch_size)+"_ev02"
     snapshot_path = snapshot_path + '_lr' + str(args.base_lr) if args.base_lr != 0.01 else snapshot_path
 
     config_vit = CONFIGS_ViT_seg[args.vit_name]
@@ -130,7 +140,7 @@ if __name__ == "__main__":
     snapshot = os.path.join(snapshot_path, 'epoch_'+str(args.max_epochs-1)+'.pth')
     print('The testing model is load from:', snapshot)
 
-    net.load_state_dict(torch.load(snapshot))
+    net.load_state_dict(torch.load(snapshot, weights_only=True))
     snapshot_name = snapshot_path.split('/')[-1]
 
 

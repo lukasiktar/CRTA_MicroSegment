@@ -44,7 +44,7 @@ def prepare_data_and_predict(main_dir, images_dir, net):
 
         orig_image=cv2.imread(image_path)
         path=image_path.split("_")[-2] 
-        #deg=image_path.split("_")[-1].split(".j")[-2]
+        #deg=image_path.split("_")[-1].split(".p")[-2]
         deg=image_path.split("/")[-1].split(".j")[-2].split("'")[-1]
         #deg=image_path.split("-")[-1].split(".p")[0]
         deg=deg.replace(f"decdeg","deg")        #If images have wrong name, change it
@@ -78,7 +78,7 @@ def prepare_data_and_predict(main_dir, images_dir, net):
                 cls_pred = torch.sigmoid(cls_output).squeeze()
                 print(cls_pred)
                 #Check if the classification predicts an object (you may need to adjust the threshold)
-                if cls_pred.item() < 0.9:  # Assuming 0.5 as the threshold
+                if cls_pred.item() < 0.99:  # Assuming 0.5 as the threshold
                     print("!!!!!!!!!!!!!!!!!!")
                     # If no object is predicted, create a black mask
                     pred = np.zeros((image.shape[0], image.shape[1]), dtype=np.uint8)

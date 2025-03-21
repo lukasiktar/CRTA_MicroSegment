@@ -44,6 +44,7 @@ def trainer_MicroUS(args, model, snapshot_path):
         model = nn.DataParallel(model)
     model.train()
 
+    #Probati AdamW
     optimizer = optim.SGD(model.parameters(), lr=base_lr, momentum=0.9, weight_decay=0.0001)
     writer = SummaryWriter(snapshot_path + '/log')
     iter_num = 0
@@ -89,7 +90,10 @@ def trainer_MicroUS(args, model, snapshot_path):
                 # print(torch.sigmoid(cls_output))
                 cls_loss = criterion_cls(cls_output, cls_label_batch.float())
                 #print(cls_loss)
-                loss = loss0 + loss1 + loss2 + loss3 + 0.065*cls_loss
+                #For  classification
+                #loss = loss0 + loss1 + loss2 + loss3 + 0.065*cls_loss
+                #Standard
+                loss = loss0 + loss1 + loss2 + loss3
 
                 optimizer.zero_grad()
                 loss.backward()
