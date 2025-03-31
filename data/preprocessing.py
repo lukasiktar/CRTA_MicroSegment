@@ -15,12 +15,14 @@ non_exp_path = 'CRTA_MicroSegment/data/Micro_Ultrasound_Prostate_Segmentation_Da
 
 list_path = 'TransUNet/lists/'
 out_image_path = 'data/train_png/'
+out_test_image_path = 'data/test_png/'
 
 test_image_path = 'CRTA_MicroSegment/data/Micro_Ultrasound_Prostate_Segmentation_Dataset/test/micro_ultrasound_scans/'
 test_mask_path = 'CRTA_MicroSegment/data/Micro_Ultrasound_Prostate_Segmentation_Dataset/test/expert_annotations/'
 
 #Create train dataset
 os.makedirs(out_image_path, exist_ok=True)
+os.makedirs(out_test_image_path, exist_ok=True)
 os.makedirs(list_path, exist_ok=True)
 #Store the filenames into a list
 list_of_image = glob.glob(image_path + "*.nii.gz")
@@ -51,13 +53,20 @@ for i in tqdm(range(len(list_of_image))):
     img_name = list_of_image[i]
     gt_name = list_of_mask[i]
     st_name = list_of_st[i]
+    # test_img_name = list_of_test_image[i]
+    # test_gt_name = list_of_test_mask[i]
 
     img = sitk.ReadImage(img_name)
     gt = sitk.ReadImage(gt_name) 
     st = sitk.ReadImage(st_name)
+    # test_img = sitk.ReadImage(test_img_name)
+    # test_gt = sitk.ReadImage(test_gt_name)
+
     image_array = sitk.GetArrayFromImage(img)
     seg_array = sitk.GetArrayFromImage(gt)
     student_seg_array = sitk.GetArrayFromImage(st)
+    # test_image_array = sitk.GetArrayFromImage(test_img)
+    # test_seg_array = sitk.GetArrayFromImage(test_gt)
     
     image_array = 255*(image_array - 0)/254   # data volumes are normalized to 0-254 beforehand.
     
@@ -76,13 +85,47 @@ for i in tqdm(range(len(list_of_image))):
 
         sub_name = img_name.split("/")[-1].split("_")[0]
         idx = img_name.split("/")[-1].split("_")[-1].split(".")[0]
-        output_image_name = out_image_path + sub_name + '_' + idx + "_img_slice_" + str(z) + ".png"
-        output_seg_name = out_image_path + sub_name + '_' + idx + "_gt_slice_" + str(z) + ".png"
-        output_student_seg_name = out_image_path + sub_name + '_' + idx + "_st_slice_" + str(z) + ".png"
+        output_image_name = out_image_path + sub_name + '_' + idx + "_train_img_slice_" + str(z) + ".png"
+        output_seg_name = out_image_path + sub_name + '_' + idx + "_train_gt_slice_" + str(z) + ".png"
+        output_student_seg_name = out_image_path + sub_name + '_' + idx + "_train_st_slice_" + str(z) + ".png"
         
-        cv2.imwrite(output_image_name, image_2d_resized)
-        cv2.imwrite(output_seg_name, seg_2d_resized)
-        cv2.imwrite(output_student_seg_name, student_seg_2d_resized)
+        # cv2.imwrite(output_image_name, image_2d_resized)
+        # cv2.imwrite(output_seg_name, seg_2d_resized)
+        # cv2.imwrite(output_student_seg_name, student_seg_2d_resized)
+
+   
+
+for i in tqdm(range(len(list_of_test_image))):  
+    test_img_name = list_of_test_image[i]
+    print(test_img_name)
+    test_gt_name = list_of_test_mask[i]
+
+    test_img = sitk.ReadImage(test_img_name)
+    test_gt = sitk.ReadImage(test_gt_name)
+
+    test_image_array = sitk.GetArrayFromImage(test_img)
+    test_seg_array = sitk.GetArrayFromImage(test_gt)
+  
+    #test_image_array = 255*(test_image_array - 0)/254   # data volumes are normalized to 0-254 beforehand.
+    number_of_test_slices = test_image_array.shape[0]  
+
+    #Extract single image from the test .nii
+    for z in range(number_of_test_slices):
+        image_2d = test_image_array[z]
+        if len(test_seg_array.shape)==3:
+            seg_2d = test_seg_array[z]
+
+        
+        image_2d_resized = cv2.resize(image_2d, (width,height))
+        seg_2d_resized = 255*(cv2.resize(seg_2d, (width,height))>0)
+
+        sub_name = test_img_name.split("/")[-1].split("_")[0]
+        idx = test_img_name.split("/")[-1].split("_")[-1].split(".")[0]
+        output_test_image_name = out_test_image_path + sub_name + '_' + idx + "_test_img_slice_" + str(z) + ".png"
+        output_test_seg_name = out_test_image_path + sub_name + '_' + idx + "_test_gt_slice_" + str(z) + ".png"
+        
+        cv2.imwrite(output_test_image_name, image_2d_resized)
+        cv2.imwrite(output_test_seg_name, seg_2d_resized)
 
 
 
@@ -98,6 +141,8 @@ def extract_numbers(filename):
 image_names = sorted(glob.glob(out_image_path + "*img_slice*"),key=extract_numbers)
 seg_names = sorted(glob.glob(out_image_path + "*gt_slice*"),key=extract_numbers)
 student_seg_names = sorted(glob.glob(out_image_path + "*st_slice*"),key=extract_numbers)
+test_image_names = sorted(glob.glob(out_test_image_path + "*test_img_slice*"),key=extract_numbers)
+test_seg_names = sorted(glob.glob(out_test_image_path + "*test_gt_slice*"),key=extract_numbers)
 
 array = np.empty((len(image_names) + 1,5), dtype='U30')
 array[0,0] = "image"
@@ -106,14 +151,14 @@ array[0,2] = "non_expert_mask"
 array[0,3] = "test_img"
 array[0,4] = "test_mask"
 
-for i in range(1,len(image_names)+1):
+for i in range(1,len(student_seg_names)+1):
     array[i,0] = image_names[i-1].replace(out_image_path,"").split('.')[0]
     array[i,1] = seg_names[i-1].replace(out_image_path,"").split('.')[0]
     array[i,2] = student_seg_names[i-1].replace(out_image_path,"").split('.')[0]
 
-for i in range(1, len(list_of_test_image)+1):
-    array[i,3] = list_of_test_image[i-1].split('/')[-1].split('.')[0]
-    array[i,4] = list_of_test_mask[i-1].split('/')[-1].split('.')[0]
+for i in range(1, len(test_seg_names)+1):
+    array[i,3] = test_image_names[i-1].split('/')[-1].split('.')[0]
+    array[i,4] = test_seg_names[i-1].split('/')[-1].split('.')[0]
     
 np.savetxt('data.csv', array, delimiter=",", fmt='%s')
 print('Finished generating data.csv file!')

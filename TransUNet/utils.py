@@ -46,168 +46,82 @@ def attention_BCE_loss(h_W, y_true, y_pred, y_std, ks = 5):
     return LOSS
 
 
-
-
-
-
 def calculate_metric_percase(pred, gt, spacing):
-    pred[pred > 0] = 1
-    gt[gt > 0] = 1
-    hd95 = 0
-    dice = 0
-    jc=0
-    sp=0
+    pred = np.array(pred)
+    gt = np.array(gt)
 
-    num = 0
+    pred[pred > 0] = 1  
+    gt[gt > 0] = 1  
 
-    for i in range(pred.shape[0]):
-        pred_sum = pred[i,:,:].sum()
-        gt_sum = gt[i,:,:].sum()
-        if pred_sum>0 and gt_sum>0:
-            num +=1
-            dice += metric.binary.dc(pred[i,:,:], gt[i,:,:])
-            hd95 += metric.binary.hd95(pred[i,:,:], gt[i,:,:])
-            jc += metric.binary.jc(pred[i,:,:], gt[i,:,:])
-            sp += metric.binary.specificity(pred[i,:,:], gt[i,:,:])
-            
+    if np.sum(pred) == 0:  # No foreground in prediction
+        if np.sum(gt) == 0:
+            hd95 = float(0.0)  
+        else:
+              
+            hd95 = float(1.0)
+    else:
+        if np.sum(gt) == 0:
+            hd95 = float(0.0)
+        else:
+            hd95 = metric.binary.hd95(pred, gt)
 
-    hd95 = (hd95*spacing)/num
-    dice = dice/num
-    jc = jc/num
-    sp=sp/num
-    return dice, hd95, jc, sp
+    dice = metric.binary.dc(pred, gt) if np.sum(gt) > 0 else 0  
+    jc = metric.binary.jc(pred, gt) if np.sum(gt) > 0 else 0
+    sp = metric.binary.specificity(pred, gt) if np.sum(gt) > 0 else 0
+    precision = metric.binary.precision(pred,gt) if np.sum(gt) > 0 else 0
+    recall = metric.binary.recall(pred,gt) if np.sum(gt) > 0 else 0
+
+    return dice, hd95, jc, sp, precision, recall
 
 
 
-def test_single_volume(image, label, net, spacing, origin, direction, classes, patch_size=[224, 224], test_save_path=None, case=None):
+
+def test_single_volume(image, label, net, classes, patch_size=[224, 224], test_save_path=None, case=None):
     image, label = image.squeeze(0).cpu().detach().numpy(), label.squeeze(0).cpu().detach().numpy()
-
     prediction = np.zeros_like(label)
-    for ind in range(image.shape[0]):
-        slice = image[ind, :, :]/254.0
+    predictions =[]
+    labels=[]
+    
+    
+    slice = image
+    x, y = slice.shape[0], slice.shape[1]
+    if x != patch_size[0] or y != patch_size[1]:
+        slice = cv2.resize(slice, patch_size, interpolation = cv2.INTER_NEAREST)
 
-        x, y = slice.shape[0], slice.shape[1]
+    input = torch.from_numpy(slice).unsqueeze(0).unsqueeze(0).float().cuda()
+    net.eval()
+    with torch.no_grad():
+        outputs, _, _, _, cls_output = net(input)
+        out = torch.sigmoid(outputs).squeeze()
+        
+        out = out.cpu().detach().numpy()
+        
         if x != patch_size[0] or y != patch_size[1]:
-            slice = cv2.resize(slice, patch_size, interpolation = cv2.INTER_NEAREST)
-
-        input = torch.from_numpy(slice).unsqueeze(0).unsqueeze(0).float().cuda()
-        net.eval()
-        with torch.no_grad():
-            outputs, _, _, _, cls_output  = net(input)
-            out = torch.sigmoid(outputs).squeeze()
-
-            out = out.cpu().detach().numpy()
-
-            if x != patch_size[0] or y != patch_size[1]:
-                pred = cv2.resize(out, (y, x), interpolation = cv2.INTER_NEAREST)
-            else:
-                pred = out
+            pred = cv2.resize(out, (y, x), interpolation = cv2.INTER_NEAREST)
+        else:
+            pred = out
+        
+        if torch.sigmoid(cls_output) < 0.9:
             
-            if torch.sigmoid(cls_output) < 0.9:
-                
-                pred = np.zeros_like(label[ind])
-                
-
-            a = 1.0*(pred>0.5)
-            prediction[ind] = a.astype(np.uint8)
-
+            pred = np.zeros_like(label)
+            
+        # a = 1.0*(pred>0.5)
+        # prediction = a.astype(np.uint8)
+        
+        a = 1.0*(pred>0.5)
+        pred_uint8 = (a * 255).astype(np.uint8)
+        
+        slice = cv2.resize(slice, (y, x))
+        contours, hierarchy = cv2.findContours(pred_uint8,cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        orig_slice = cv2.drawContours(slice, contours, 0, (255,255,255), 4)
+        cv2.imshow("pred",orig_slice)
+        cv2.waitKey(0)
+        prediction = a.astype(np.uint8)
+        
+    
     metric_list = []
-
-    vol_pred = sitk.GetImageFromArray(prediction.astype(np.float32))
-    vol_label = sitk.GetImageFromArray(label.astype(np.float32))
-    vol_image = sitk.GetImageFromArray(image.astype(np.float32))
-    vol_pred.SetSpacing(spacing)
-    vol_pred.SetOrigin(origin)
-    vol_pred.SetDirection(direction)
-    vol_label.SetSpacing(spacing)
-    vol_label.SetOrigin(origin)
-    vol_label.SetDirection(direction)
-    vol_image.SetSpacing(spacing)
-    vol_image.SetOrigin(origin)
-    vol_image.SetDirection(direction)
-
     # In-plane spacing is 0.033586mm*0.033586mm
     if classes == 1:
-        metric_list.append(calculate_metric_percase(prediction == 1, label == 1, 0.033586))
-
-    else:
-        for i in range(1, classes):
-            metric_list.append(calculate_metric_percase(prediction == i, label == i, 0.033586))
-
-    if test_save_path is not None:
-        sitk.WriteImage(vol_pred, test_save_path + '/'+case + "_pt_label.nii.gz")
-        sitk.WriteImage(vol_image, test_save_path + '/'+ case + "_img.nii.gz")
-        sitk.WriteImage(vol_label, test_save_path + '/'+ case + "_gt_label.nii.gz")
-        
-
+        metric_list=calculate_metric_percase(prediction, label, 0.033586)
     return metric_list
 
-# def test_single_volume(image, label, net, spacing, origin, direction, classes, patch_size=[256, 256], test_save_path=None, case=None):
-#     image, label = image.squeeze(0).cpu().detach().numpy(), label.squeeze(0).cpu().detach().numpy()
-#     #cls_label_batch = (label.sum(dim=(1,2)) > 0).float()
-#     sums = [1.0 if cv2.sumElems(img)[0] > 0 else 0.0 for img in label]
-#     prediction = np.zeros_like(label)
-#     for ind in range(image.shape[0]):
-#         slice = image[ind, :, :]/254.0
-#         label_1 = sums[ind]
-
-#         x, y = slice.shape[0], slice.shape[1]
-#         if x != patch_size[0] or y != patch_size[1]:
-#             slice = cv2.resize(slice, patch_size, interpolation = cv2.INTER_NEAREST)
-
-#         input = torch.from_numpy(slice).unsqueeze(0).unsqueeze(0).float().cuda()
-#         #print(f"Input shape: {input.shape}")
-#         net.eval()
-#         with torch.no_grad():
-#             outputs, _, _, _, cls_output = net(input)
-#             out = torch.sigmoid(outputs).squeeze()
-            
-#             out = out.cpu().detach().numpy()
-
-#             if x != patch_size[0] or y != patch_size[1]:
-#                 pred = cv2.resize(out, (y, x), interpolation = cv2.INTER_NEAREST)
-#             else:
-#                 pred = out
-#             #print(cv2.sumElems(pred))
-#             if torch.sigmoid(cls_output) < 0.9:
-                
-#                 pred = np.zeros_like(label[ind])
-                
-
-#             #print(cv2.sumElems(pred))
-           
-
-
-#             a = 1.0*(pred>0.5)
-#             prediction[ind] = a.astype(np.uint8)
-
-#     metric_list = []
-
-#     vol_pred = sitk.GetImageFromArray(prediction.astype(np.float32))
-#     vol_label = sitk.GetImageFromArray(label.astype(np.float32))
-#     vol_image = sitk.GetImageFromArray(image.astype(np.float32))
-#     vol_pred.SetSpacing(spacing)
-#     vol_pred.SetOrigin(origin)
-#     vol_pred.SetDirection(direction)
-#     vol_label.SetSpacing(spacing)
-#     vol_label.SetOrigin(origin)
-#     vol_label.SetDirection(direction)
-#     vol_image.SetSpacing(spacing)
-#     vol_image.SetOrigin(origin)
-#     vol_image.SetDirection(direction)
-
-#     # In-plane spacing is 0.033586mm*0.033586mm
-#     if classes == 1:
-#         metric_list.append(calculate_metric_percase(prediction == 1, label == 1, 0.033586))
-
-#     else:
-#         for i in range(1, classes):
-#             metric_list.append(calculate_metric_percase(prediction == i, label == i, 0.033586))
-
-#     if test_save_path is not None:
-#         sitk.WriteImage(vol_pred, test_save_path + '/'+case + "_pt_label.nii.gz")
-#         sitk.WriteImage(vol_image, test_save_path + '/'+ case + "_img.nii.gz")
-#         sitk.WriteImage(vol_label, test_save_path + '/'+ case + "_gt_label.nii.gz")
-        
-
-#     return metric_list

@@ -16,7 +16,7 @@ from CRTA_MicroSegment.TransUNet.networks.vit_seg_modeling import CONFIGS as CON
 from prepareDataAndPredict import prepare_data_and_predict
 from displayResults import display_results
 
-MODEL_PATH="/home/crta-hp-408/PRONOBIS/MicroSegNet/model/CRTA_MicroSegmentMicroUS224_R50-ViT-B_16_weight4_epo30_bs4/epoch_29.pth"
+MODEL_PATH="model/CRTA_MicroSegmentMicroUS224_R50-ViT-B_16_weight4_epo30_bs4_ev02/epoch_29.pth"
 
 #Real prostate (ExactVu)
 #DATASET_DIRECTORY="/home/crta-hp-408/PRONOBIS/ExactVU_dataset/20231211074944206"
@@ -32,11 +32,11 @@ MODEL_PATH="/home/crta-hp-408/PRONOBIS/MicroSegNet/model/CRTA_MicroSegmentMicroU
 #DATASET_DIRECTORY="/home/crta-hp-408/PRONOBIS/CRTA_fantom_dataset/prostate_2_full"
 #DATASET_DIRECTORY="/home/crta-hp-408/Downloads/5/processed"
 #DATASET_DIRECTORY="/home/crta-hp-408/Downloads/8/processed"
-DATASET_DIRECTORY="/home/crta-hp-408/PRONOBIS/CRTA_fantom_dataset/sweep_P1_1_30012025"
+#DATASET_DIRECTORY="/home/crta-hp-408/PRONOBIS/CRTA_fantom_dataset/sweep_P1_1_30012025"
 #DATASET_DIRECTORY="/home/crta-hp-408/PRONOBIS/CRTA_fantom_dataset/sweep_P1_2_30012025"
 #DATASET_DIRECTORY="/home/crta-hp-408/PRONOBIS/CRTA_fantom_dataset/sweep_P1_3_30012025"
 #DATASET_DIRECTORY="/home/crta-hp-408/PRONOBIS/CRTA_fantom_dataset/sweep_P2_1_30012025"
-#DATASET_DIRECTORY="/home/crta-hp-408/PRONOBIS/CRTA_fantom_dataset/sweep_P2_2_30012025"
+DATASET_DIRECTORY="/home/crta-hp-408/PRONOBIS/CRTA_fantom_dataset/sweep_P2_2_30012025"
 #DATASET_DIRECTORY="/home/crta-hp-408/PRONOBIS/CRTA_fantom_dataset/sweep_P2_3_30012025"
 
 MAIN_DIRECTORY_NAME=DATASET_DIRECTORY.split("/")[-1]

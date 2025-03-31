@@ -34,6 +34,9 @@ def prepare_data_and_predict(main_dir, images_dir, net):
     output_dir = f"{main_dir}_processed/output_images" # Directory where output images will be saved
     os.makedirs(output_dir, exist_ok=True)  # Create directory if it doesn't exist
 
+    output_dir0 = f"{main_dir}_processed/output_images_224" # Directory where output images will be saved
+    os.makedirs(output_dir0, exist_ok=True)  # Create directory if it doesn't exist
+
     output_dir1 = f"{main_dir}_processed/output_segmentations" # Directory where segmentation images will be saved
     os.makedirs(output_dir1, exist_ok=True) 
 
@@ -48,7 +51,7 @@ def prepare_data_and_predict(main_dir, images_dir, net):
         deg=image_path.split("/")[-1].split(".j")[-2].split("'")[-1]
         #deg=image_path.split("-")[-1].split(".p")[0]
         deg=deg.replace(f"decdeg","deg")        #If images have wrong name, change it
-        #print(deg)
+        deg=float(deg)
         #images.append(orig_image)
         
         #Convert image to grayscale
@@ -56,9 +59,9 @@ def prepare_data_and_predict(main_dir, images_dir, net):
 
         #Store the input=original images
         #output_path_original_image= os.path.join(output_dir2, f"{dir_name}_original_{path}.png")
-        output_path_original_image= os.path.join(output_dir2, f"original_{deg}.png")
+        # output_path_original_image= os.path.join(output_dir2, f"original_{deg:.10f}.png")
 
-        cv2.imwrite(output_path_original_image, image)
+        # cv2.imwrite(output_path_original_image, image)
 
         # Convert the image to a PyTorch tensor
         image_tensor = torch.from_numpy(image).float()          # Convert to float32 tensor
@@ -82,6 +85,7 @@ def prepare_data_and_predict(main_dir, images_dir, net):
                     print("!!!!!!!!!!!!!!!!!!")
                     # If no object is predicted, create a black mask
                     pred = np.zeros((image.shape[0], image.shape[1]), dtype=np.uint8)
+                    continue
                 else:
                     # If an object is predicted, proceed with segmentation as before
                     out = torch.sigmoid(outputs).squeeze()
@@ -94,13 +98,19 @@ def prepare_data_and_predict(main_dir, images_dir, net):
                 a = 1.0*(pred>0.5)
                 prediction = a.astype(np.uint8)
                 #Resize to original image (fix - autmate)
-                prediction=cv2.resize(prediction, (image.shape[1],image.shape[0]))
+                
                 prediction = cv2.normalize(prediction, dst=None, alpha=0, beta=255,norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+                output_path0 = os.path.join(output_dir0, f"mask_224_{deg:.10f}.png")
+                cv2.imwrite(output_path0, prediction)
+                prediction=cv2.resize(prediction, (image.shape[1],image.shape[0]))
                 predictions.append(prediction)
                 #Store masks
                 #output_path = os.path.join(output_dir, f"{dir_name}_slice_{path}.png")
-                output_path = os.path.join(output_dir, f"mask_{deg}.png")
+                output_path = os.path.join(output_dir, f"mask_{deg:.10f}.png")
 
+                output_path_original_image= os.path.join(output_dir2, f"original_{deg:.10f}.png")
+
+                cv2.imwrite(output_path_original_image, image)
                 
 
                 #Find contours on predicted masks (used for visualization)
@@ -135,7 +145,7 @@ def prepare_data_and_predict(main_dir, images_dir, net):
 
                 #Store the images with found contours
                 #output_path1 = os.path.join(output_dir1, f"{dir_name}_segmentation_{path}.png")
-                output_path1 = os.path.join(output_dir1, f"segmentation_{deg}.png")
+                output_path1 = os.path.join(output_dir1, f"segmentation_{deg:.10f}.png")
 
                 cv2.imwrite(output_path1, orig_image)
 
