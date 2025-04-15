@@ -27,7 +27,7 @@ parser.add_argument('--num_classes', type=int,
 parser.add_argument('--max_iterations', type=int, 
                     default=30000, help='maximum epoch number to train')
 parser.add_argument('--max_epochs', type=int, 
-                    default=30, help='maximum epoch number to train')
+                    default=40, help='maximum epoch number to train')
 parser.add_argument('--batch_size', type=int,
                      default=4, help='batch_size per gpu')
 
@@ -154,7 +154,7 @@ if __name__ == "__main__":
     # max epoch
     snapshot_path = snapshot_path + '_epo' + str(args.max_epochs) if args.max_epochs != 15 else snapshot_path
     # batch size
-    snapshot_path = snapshot_path+'_bs'+str(args.batch_size)+"_ev02"
+    snapshot_path = snapshot_path+'_bs'+str(args.batch_size)+"_ev03"
     # base learning rate
     snapshot_path = snapshot_path + '_lr' + str(args.base_lr) if args.base_lr != 0.01 else snapshot_path
 
@@ -169,6 +169,8 @@ if __name__ == "__main__":
     net = ViT_seg(config_vit, img_size=args.img_size, num_classes=config_vit.n_classes).cuda()
 
     snapshot = os.path.join(snapshot_path, 'epoch_'+str(args.max_epochs-1)+'.pth')
+    snapshot = os.path.join(snapshot_path, 'epoch_'+"19"+'.pth')
+
     print('The testing model is load from:', snapshot)
     net.load_state_dict(torch.load(snapshot, weights_only=True))
     snapshot_name = snapshot_path.split('/')[-1]

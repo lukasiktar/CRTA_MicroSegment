@@ -100,8 +100,8 @@ def test_single_volume(image, label, net, classes, patch_size=[224, 224], test_s
             pred = cv2.resize(out, (y, x), interpolation = cv2.INTER_NEAREST)
         else:
             pred = out
-        
-        if torch.sigmoid(cls_output) < 0.9:
+        print(torch.sigmoid(cls_output))
+        if torch.sigmoid(cls_output) < 0.98:
             
             pred = np.zeros_like(label)
             

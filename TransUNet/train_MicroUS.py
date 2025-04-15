@@ -14,7 +14,7 @@ torch.cuda.empty_cache()
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--root_path', type=str,
-                    default='./data/train_png_base', help='root dir for training data')
+                    default='./data/train_png', help='root dir for training data')
 parser.add_argument('--dataset', type=str,
                     default='MicroUS', help='experiment_name')
 parser.add_argument('--list_dir', type=str,
@@ -23,8 +23,10 @@ parser.add_argument('--num_classes', type=int,
                         default=1, help='output channel of network')
 parser.add_argument('--max_iterations', type=int,
                     default=30000, help='maximum iteration number to train')
-parser.add_argument('--max_epochs', type=int,
-                    default=30, help='maximum epoch number to train')
+parser.add_argument('--max_epochs_seg', type=int,
+                    default=40, help='maximum epoch number to train')
+parser.add_argument('--max_epochs_cls', type=int,
+                    default=20, help='maximum epoch number to train')
 parser.add_argument('--batch_size', type=int,
                     default=4, help='batch_size per gpu')
 parser.add_argument('--n_gpu', type=int, default=1, help='total gpu')
@@ -71,7 +73,7 @@ if __name__ == "__main__":
     # hard weight
     snapshot_path = snapshot_path + '_weight' + str(args.weight)
     # max epoch
-    snapshot_path = snapshot_path + '_epo' +str(args.max_epochs)
+    snapshot_path = snapshot_path + '_epo' +str(args.max_epochs_seg)
     # batch size
     snapshot_path = snapshot_path+'_bs'+str(args.batch_size)
     # base learning rate
@@ -84,10 +86,16 @@ if __name__ == "__main__":
     config_vit.n_skip = args.n_skip
     if args.vit_name.find('R50') != -1:
         config_vit.patches.grid = (int(args.img_size / args.vit_patches_size), int(args.img_size / args.vit_patches_size))
+    #For full training
     config_vit.pretrained_path="./CRTA_MicroSegment/model/vit_checkpoint/imagenet21k/R50-ViT-B_16.npz"
     # load model
     net = ViT_seg(config_vit, img_size=args.img_size, num_classes=config_vit.n_classes).cuda()
     net.load_from(weights=np.load(config_vit.pretrained_path))
+
+    #For classification
+    #MODEL_PATH="/home/crta-hp-408/PRONOBIS/MicroSegNet/model/CRTA_MicroSegmentMicroUS224_R50-ViT-B_16_weight4_epo30_bs4/epoch_29.pth"
+    #net = ViT_seg(config_vit, img_size=args.img_size, num_classes=config_vit.n_classes).cuda()
+    #net.load_state_dict(torch.load(MODEL_PATH))
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     net = net.to(device)  # Move the model to the correct device
    

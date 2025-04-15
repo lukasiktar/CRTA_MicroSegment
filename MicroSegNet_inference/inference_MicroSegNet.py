@@ -16,7 +16,7 @@ from CRTA_MicroSegment.TransUNet.networks.vit_seg_modeling import CONFIGS as CON
 from prepareDataAndPredict import prepare_data_and_predict
 from displayResults import display_results
 
-MODEL_PATH="model/CRTA_MicroSegmentMicroUS224_R50-ViT-B_16_weight4_epo30_bs4_ev02/epoch_29.pth"
+MODEL_PATH="/home/crta-hp-408/PRONOBIS/MicroSegNet/model/CRTA_MicroSegmentMicroUS224_R50-ViT-B_16_weight4_epo40_bs4_ev03/epoch_19.pth"
 
 #Real prostate (ExactVu)
 #DATASET_DIRECTORY="/home/crta-hp-408/PRONOBIS/ExactVU_dataset/20231211074944206"
@@ -36,14 +36,25 @@ MODEL_PATH="model/CRTA_MicroSegmentMicroUS224_R50-ViT-B_16_weight4_epo30_bs4_ev0
 #DATASET_DIRECTORY="/home/crta-hp-408/PRONOBIS/CRTA_fantom_dataset/sweep_P1_2_30012025"
 #DATASET_DIRECTORY="/home/crta-hp-408/PRONOBIS/CRTA_fantom_dataset/sweep_P1_3_30012025"
 #DATASET_DIRECTORY="/home/crta-hp-408/PRONOBIS/CRTA_fantom_dataset/sweep_P2_1_30012025"
-DATASET_DIRECTORY="/home/crta-hp-408/PRONOBIS/CRTA_fantom_dataset/sweep_P2_2_30012025"
+#DATASET_DIRECTORY="/home/crta-hp-408/PRONOBIS/CRTA_fantom_dataset/sweep_P2_2_30012025"
 #DATASET_DIRECTORY="/home/crta-hp-408/PRONOBIS/CRTA_fantom_dataset/sweep_P2_3_30012025"
 
-MAIN_DIRECTORY_NAME=DATASET_DIRECTORY.split("/")[-1]
-print(MAIN_DIRECTORY_NAME)
-INPUT_IMAGES_DIRECTORY=f"{MAIN_DIRECTORY_NAME}/input_images"
-OUTPUT_MASKS_DIRECTORY=f"{MAIN_DIRECTORY_NAME}/output_images"
-OUTPUT_SEGMENTATIONS_DIRECTORY=f"{MAIN_DIRECTORY_NAME}/output_segmentations"
+#DATASET_DIRECTORY='/home/crta-hp-408/PRONOBIS/ExactDataDicom_filtered_300_40/20231211074944206/20231211074944300/20231211074944363/574264887992169367462984672684115684'
+
+with open('/home/crta-hp-408/PRONOBIS/Read_DICOM_Images/path_list.txt', 'r') as file:
+    lines = file.readlines()
+
+# Optionally remove newline characters
+DATASET_DIRECTORY_LIST = [line.strip() for line in lines]
+
+for DATASET_DIRECTORY in DATASET_DIRECTORY_LIST:
+
+
+    MAIN_DIRECTORY_NAME=DATASET_DIRECTORY.split("/")[-1]
+    #print(MAIN_DIRECTORY_NAME)
+    # INPUT_IMAGES_DIRECTORY=f"{MAIN_DIRECTORY_NAME}/input_images"
+    # OUTPUT_MASKS_DIRECTORY=f"{MAIN_DIRECTORY_NAME}/output_images"
+    # OUTPUT_SEGMENTATIONS_DIRECTORY=f"{MAIN_DIRECTORY_NAME}/output_segmentations"
 
 #Define arguments for MicroSegNet model initialization
 parser = argparse.ArgumentParser()
@@ -68,8 +79,11 @@ net = ViT_seg(config_vit, img_size=args.img_size, num_classes=config_vit.n_class
 net.load_state_dict(torch.load(MODEL_PATH))
 net.eval()
 #Prepare the and perform the inference dataset
-images_dir=DATASET_DIRECTORY
-prepare_data_and_predict(MAIN_DIRECTORY_NAME,images_dir, net)
+for DATASET_DIRECTORY in DATASET_DIRECTORY_LIST:
+    images_dir=DATASET_DIRECTORY
+    main_dir_name=DATASET_DIRECTORY.split("/")[-1]
+    print(images_dir)
+    prepare_data_and_predict(main_dir_name,images_dir, net)
 
 #Optional: Display the inference results
 #display_results(number_of_images_to_show=10, output_dir=OUTPUT_SEGMENTATIONS_DIRECTORY)

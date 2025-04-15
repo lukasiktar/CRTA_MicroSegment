@@ -416,16 +416,16 @@ class VisionTransformer(nn.Module):
             nn.Linear(config.hidden_size, 512),
             nn.BatchNorm1d(512),
             nn.ReLU(),
-            nn.Dropout(0.5),
+            nn.Dropout(0.8),
             nn.Linear(512,256),
             #nn.Linear(config.hidden_size,256),
             nn.BatchNorm1d(256),
             nn.ReLU(),
-            nn.Dropout(0.5),
+            nn.Dropout(0.8),
             nn.Linear(256, 128), # Assuming binary classification
             nn.BatchNorm1d(128),
             nn.ReLU(),
-            nn.Dropout(0.5),
+            nn.Dropout(0.8),
             nn.Linear(128, 1),
             nn.BatchNorm1d(1)
         )
