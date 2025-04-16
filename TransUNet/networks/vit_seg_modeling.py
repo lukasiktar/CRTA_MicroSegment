@@ -153,9 +153,14 @@ class Embeddings(nn.Module):
                                        out_channels=config.hidden_size,
                                        kernel_size=patch_size,
                                        stride=patch_size)
-        self.position_embeddings = nn.Parameter(torch.zeros(1, n_patches, config.hidden_size))  # register position embeddings as learnable parameters
+        # Add CLS token parameter
+        self.cls_token = nn.Parameter(torch.zeros(1, 1, config.hidden_size))
+        self.batch_size=config.batch_size
+
+        self.position_embeddings = nn.Parameter(torch.zeros(1, n_patches+1, config.hidden_size))  # register position embeddings as learnable parameters
 
         self.dropout = Dropout(config.transformer["dropout_rate"])
+        
 
 
     def forward(self, x):
@@ -166,6 +171,10 @@ class Embeddings(nn.Module):
         x = self.patch_embeddings(x)  # (bs, hidden. n_patches^(1/2), n_patches^(1/2))
         x = x.flatten(2)    # (bs, hidden, patches)
         x = x.transpose(-1, -2)  # (bs, n_patches, hidden)
+        # Add CLS token to patch embeddings
+        
+        cls_tokens = self.cls_token.expand(self.batch_size, -1, -1)  # (B, 1, hidden_size)
+        x = torch.cat((cls_tokens, x), dim=1)  # (B, n_patches+1, hidden_size)
 
         embeddings = x + self.position_embeddings
         embeddings = self.dropout(embeddings)
@@ -437,12 +446,16 @@ class VisionTransformer(nn.Module):
         x, attn_weights, features = self.transformer(x)  # (B, n_patch, hidden)
         # Classification
         cls_token = x[:, 0, :]  # Use the [CLS] token for classification
+        # print(x.shape)
+        # print(x)
         classification_output = self.classification_head(cls_token)
         
         # Ensure classification_output is 2D: [batch_size, num_classes]
         if classification_output.dim() == 1:
             classification_output = classification_output.unsqueeze(1)
 
+        #Mozda u X izbaciti prvi element
+        x = x[:, 1:, :]
         x, out0, out1, out2 = self.decoder(x, features)
         logits = self.segmentation_head(x)
         return logits, out0, out1, out2, classification_output
